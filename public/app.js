@@ -847,6 +847,11 @@ function renderTransactions(transactions) {
               class="ghost-button danger"
               type="button"
               data-delete-transaction="${escapeHtml(transaction.id)}"
+              data-transaction-label="${escapeHtml(
+                `${transaction.companyName || transaction.symbol || transaction.assetQuery || "Transaction"} - ${formatDate(
+                  transaction.date
+                )}`
+              )}"
             >
               Delete
             </button>
@@ -986,12 +991,13 @@ async function handleTransactionActions(event) {
   }
 
   const transactionId = button.getAttribute("data-delete-transaction");
+  const transactionLabel = button.getAttribute("data-transaction-label") || "this transaction";
 
   if (!transactionId) {
     return;
   }
 
-  const ok = window.confirm("Delete this transaction?");
+  const ok = window.confirm(`Delete ${transactionLabel}?`);
 
   if (!ok) {
     return;
