@@ -1,27 +1,29 @@
 # Stock Record
 
-เว็บสำหรับบันทึกซื้อ/ขายหุ้นอเมริกา พร้อม frontend, backend, dashboard และราคาล่าสุดจาก API ที่ backend มีอยู่แล้ว
+Stock Record is a small US stock buy/sell tracker with a separated frontend and backend.
 
-## What it does
+## What It Does
 
-- บันทึกรายการซื้อและขายหุ้น
-- คำนวณ current holdings, average cost, realized P/L, unrealized P/L
-- ดึงราคาล่าสุดของหุ้นผ่าน `Financial Modeling Prep` และ fallback ไป `Yahoo Finance`
-- แสดง dashboard แบบ responsive ใช้งานได้ทั้ง desktop และ mobile
-- เก็บข้อมูล transaction ลงไฟล์ JSON ในเครื่อง
+- Stores buy and sell transactions in a local JSON file
+- Calculates holdings, average cost, realized P/L, unrealized P/L, and portfolio summary
+- Fetches market data from Financial Modeling Prep
+- Shows a responsive dashboard for desktop and mobile
 
-## Tech Stack
+## Architecture
 
-- Node.js 20
-- Native `http` server
-- Vanilla HTML / CSS / JavaScript
-- File-based storage
-- Docker
+- `frontend/server.js` serves the static UI from `public/`
+- `backend/server.js` exposes the API and business logic
+- `server.js` starts both servers together for convenience
+- Shared utilities live in `src/`
 
 ## Project Structure
 
 ```text
 StockRecord/
+  backend/
+    server.js
+  frontend/
+    server.js
   public/
     index.html
     styles.css
@@ -30,7 +32,6 @@ StockRecord/
     env.js
     market.js
     portfolio.js
-    server.js
     storage.js
   data/
     transactions.json
@@ -42,13 +43,18 @@ StockRecord/
   README.md
 ```
 
+## Requirements
+
+- Node.js 20 or newer
+- Docker, if you want to run the containerized setup
+
 ## Environment Variables
 
-Create `.env` from `.env.example`
+Copy `.env.example` to `.env` and adjust as needed.
 
 ```text
 NODE_ENV=development
-PORT=3000
+FRONTEND_PORT=3000
 BACKEND_PORT=3001
 API_BASE_URL=http://localhost:3001
 CORS_ORIGIN=http://localhost:3000
@@ -62,26 +68,31 @@ DATA_FILE=./data/transactions.json
 npm install
 ```
 
-> The project uses only built-in Node modules, so `npm install` mainly creates the lockfile and prepares the workflow.
-
 ## Run Locally
+
+Start both servers:
 
 ```sh
 npm start
 ```
 
-Open:
-
 - Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:3001`
+- Backend: `http://localhost:3001`
 
-For development with auto-restart:
+Start them separately if you want to work on only one side:
+
+```sh
+npm run start:frontend
+npm run start:backend
+```
+
+Development mode with auto-reload:
 
 ```sh
 npm run dev
 ```
 
-## Run With Docker
+## Docker
 
 ```sh
 docker compose up --build
@@ -90,9 +101,9 @@ docker compose up --build
 Then open:
 
 - Frontend: `http://localhost:3000`
-- Backend API: `http://localhost:3001`
+- Backend: `http://localhost:3001`
 
-## Important API Endpoints
+## API Endpoints
 
 - `GET /health`
 - `GET /api/dashboard`
@@ -118,16 +129,8 @@ Then open:
 }
 ```
 
-## How Dashboard Works
+## Notes
 
-- `summary` card reads from all transactions
-- `holdings` table shows only open positions
-- `latestPrice` is fetched per symbol from the backend API
-- if FMP fails, the backend uses Yahoo Finance fallback
-
-## Troubleshooting
-
-- If stock data is empty, check `FMP_API_KEY` in `.env`
-- If frontend cannot reach backend, confirm ports `3000` and `3001` are free
-- If Docker build fails, make sure Docker Engine is running
-- If deleting a transaction is rejected, it usually means the remaining history would make the portfolio invalid
+- The frontend talks to the backend through `API_BASE_URL` from `config.js`
+- If you change the ports, update `.env` accordingly
+- `data/transactions.json` is created automatically if it does not exist

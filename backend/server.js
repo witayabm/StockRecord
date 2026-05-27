@@ -1,46 +1,31 @@
 const crypto = require("crypto");
-const fs = require("fs/promises");
 const http = require("http");
-const path = require("path");
 
-const { loadEnv } = require("./env");
+const { loadEnv } = require("../src/env");
+
 loadEnv();
 
 const {
   ensureDataStore,
   readTransactions,
   writeTransactions
-} = require("./storage");
+} = require("../src/storage");
 const {
   calculatePortfolio,
   ensureCanApplyTransaction,
   sortTransactionsAscending,
   toPositiveNumber
-} = require("./portfolio");
+} = require("../src/portfolio");
 const {
   resolveHistoricalPrices,
   resolveLatestPrices,
   resolveMarketSnapshot,
   toNumberOrNull
-} = require("./market");
+} = require("../src/market");
 
-const ROOT_DIR = path.resolve(__dirname, "..");
-const PUBLIC_DIR = path.join(ROOT_DIR, "public");
-
-const FRONTEND_PORT = Number(process.env.PORT || 3000);
+const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || process.env.PORT || 3000);
 const BACKEND_PORT = Number(process.env.BACKEND_PORT || 3001);
-const API_BASE_URL =
-  process.env.API_BASE_URL || `http://localhost:${BACKEND_PORT}`;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || `http://localhost:${FRONTEND_PORT}`;
-
-const MIME_TYPES = {
-  ".css": "text/css; charset=utf-8",
-  ".html": "text/html; charset=utf-8",
-  ".js": "application/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".map": "application/json; charset=utf-8",
-  ".svg": "image/svg+xml; charset=utf-8"
-};
 
 function getLocalYmd(date = new Date()) {
   const year = date.getFullYear();
@@ -70,14 +55,6 @@ function sendJson(res, statusCode, payload) {
     ...getCorsHeaders()
   });
   res.end(JSON.stringify(payload));
-}
-
-function sendJavaScript(res, statusCode, script) {
-  res.writeHead(statusCode, {
-    "Content-Type": "application/javascript; charset=utf-8",
-    "Cache-Control": "no-store"
-  });
-  res.end(script);
 }
 
 function sendText(res, statusCode, text, contentType = "text/plain; charset=utf-8") {
@@ -114,55 +91,13 @@ function parseJsonBody(req) {
 
       try {
         resolve(JSON.parse(raw));
-      } catch (error) {
+      } catch {
         reject(new Error("Invalid JSON body"));
       }
     });
 
     req.on("error", reject);
   });
-}
-
-async function serveStaticAsset(req, res, pathname) {
-  const safePath = pathname === "/" ? "/index.html" : pathname;
-  const filePath = path.normalize(path.join(PUBLIC_DIR, safePath));
-
-  if (!filePath.startsWith(PUBLIC_DIR)) {
-    sendText(res, 403, "Forbidden");
-    return;
-  }
-
-  try {
-    const stat = await fs.stat(filePath);
-
-    if (!stat.isFile()) {
-      throw new Error("Not a file");
-    }
-
-    const extension = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[extension] || "application/octet-stream";
-    const buffer = await fs.readFile(filePath);
-
-    res.writeHead(200, {
-      "Content-Type": contentType,
-      "Content-Length": buffer.length,
-      "Cache-Control": "no-store"
-    });
-
-    if (req.method === "HEAD") {
-      res.end();
-      return;
-    }
-
-    res.end(buffer);
-  } catch {
-    if (pathname !== "/index.html") {
-      await serveStaticAsset(req, res, "/index.html");
-      return;
-    }
-
-    sendText(res, 404, "Frontend asset not found");
-  }
 }
 
 async function getLatestTransactions() {
@@ -578,50 +513,30 @@ function handleBackendRequest(req, res) {
   sendJson(res, 404, { error: "API route not found" });
 }
 
-async function handleFrontendRequest(req, res) {
-  const parsedUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
-  const pathname = parsedUrl.pathname;
+function startBackend() {
+  return ensureDataStore().then(
+    () =>
+      new Promise((resolve, reject) => {
+        const backendServer = http.createServer(handleBackendRequest);
 
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    sendText(res, 405, "Method Not Allowed");
-    return;
-  }
-
-  if (pathname === "/config.js") {
-    sendJavaScript(
-      res,
-      200,
-      `window.__APP_CONFIG__ = ${JSON.stringify({
-        apiBaseUrl: API_BASE_URL,
-        frontendBaseUrl: `http://localhost:${FRONTEND_PORT}`
-      })};`
-    );
-    return;
-  }
-
-  await serveStaticAsset(req, res, pathname);
+        backendServer.once("error", reject);
+        backendServer.listen(BACKEND_PORT, () => {
+          backendServer.off("error", reject);
+          console.log(`Backend API running at http://localhost:${BACKEND_PORT}`);
+          resolve(backendServer);
+        });
+      })
+  );
 }
 
-async function start() {
-  await ensureDataStore();
-
-  const backendServer = http.createServer(handleBackendRequest);
-  const frontendServer = http.createServer((req, res) => {
-    handleFrontendRequest(req, res).catch((error) => {
-      sendText(res, 500, `Frontend error: ${error.message}`);
-    });
-  });
-
-  backendServer.listen(BACKEND_PORT, () => {
-    console.log(`Backend API running at http://localhost:${BACKEND_PORT}`);
-  });
-
-  frontendServer.listen(FRONTEND_PORT, () => {
-    console.log(`Frontend running at http://localhost:${FRONTEND_PORT}`);
+if (require.main === module) {
+  startBackend().catch((error) => {
+    console.error("Failed to start Stock Record backend:", error);
+    process.exit(1);
   });
 }
 
-start().catch((error) => {
-  console.error("Failed to start Stock Record servers:", error);
-  process.exit(1);
-});
+module.exports = {
+  handleBackendRequest,
+  startBackend
+};
