@@ -9,7 +9,7 @@ loadEnv();
 const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || process.env.PORT || 3000);
 const BACKEND_PORT = Number(process.env.BACKEND_PORT || 3001);
 const API_BASE_URL =
-  process.env.API_BASE_URL || `http://localhost:${BACKEND_PORT}`;
+  process.env.API_BASE_URL || "";
 const FRONTEND_BASE_URL =
   process.env.FRONTEND_BASE_URL || `http://localhost:${FRONTEND_PORT}`;
 
@@ -88,17 +88,65 @@ async function serveStaticAsset(req, res, pathname) {
   }
 }
 
+function proxyApiRequest(req, res) {
+  return new Promise((resolve) => {
+    const targetUrl = new URL(req.url, `http://localhost:${BACKEND_PORT}`);
+    const headers = { ...req.headers, host: `localhost:${BACKEND_PORT}` };
+    delete headers.connection;
+    delete headers["content-length"];
+
+    const proxyRequest = http.request(
+      targetUrl,
+      {
+        method: req.method,
+        headers
+      },
+      (proxyResponse) => {
+        res.writeHead(proxyResponse.statusCode || 502, proxyResponse.headers);
+        proxyResponse.pipe(res);
+        proxyResponse.on("end", resolve);
+      }
+    );
+
+    proxyRequest.on("error", (error) => {
+      if (!res.headersSent) {
+        sendText(res, 502, `API proxy error: ${error.message}`);
+      } else {
+        res.destroy(error);
+      }
+      resolve();
+    });
+
+    req.pipe(proxyRequest);
+  });
+}
+
 async function handleFrontendRequest(req, res) {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const pathname = parsedUrl.pathname;
 
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    sendText(res, 405, "Method Not Allowed");
+  if (pathname === "/health") {
+    sendText(
+      res,
+      200,
+      JSON.stringify({
+        status: "ok",
+        service: "stock-record-frontend",
+        backendPort: BACKEND_PORT,
+        timestamp: new Date().toISOString()
+      }),
+      "application/json; charset=utf-8"
+    );
     return;
   }
 
   if (pathname.startsWith("/api/")) {
-    sendText(res, 404, "Frontend server only serves static assets");
+    await proxyApiRequest(req, res);
+    return;
+  }
+
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    sendText(res, 405, "Method Not Allowed");
     return;
   }
 

@@ -120,6 +120,14 @@ CORS_ORIGIN=https://app.example.com
 
 If you use Docker Compose, update the `.env` file and make sure the container environment is not overriding those values back to `localhost`.
 
+## Deploy On One Service
+
+If your platform only gives you one public port, you can leave `API_BASE_URL` unset and keep `FRONTEND_PORT` on the exposed port.
+
+- `frontend/server.js` will serve the UI
+- Requests to `/api/*` will proxy to the local backend server
+- `GET /health` is available on the exposed frontend port for health checks
+
 ## API Endpoints
 
 - `GET /health`
