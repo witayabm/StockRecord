@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Stock Record - track US stocks and view your portfolio at a glance."
+    />
+    <meta name="theme-color" content="#f6f7f9" />
+    <title>Stock Record</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/config.js"></script>
+    <script defer src="/app.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1 class="brand-title">Stock Record</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="status-meta">
+            <span class="status-meta__label">Last updated</span>
+            <span class="status-meta__value" id="lastUpdated">No data yet</span>
+          </div>
+          <button class="refresh-button" id="refreshButton" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <nav class="tab-bar" aria-label="Main sections">
+        <button
+          class="tab-button is-active"
+          type="button"
+          data-tab-target="overview"
+          aria-selected="true"
+        >
+          Overview
+        </button>
+        <button
+          class="tab-button"
+          type="button"
+          data-tab-target="input"
+          aria-selected="false"
+        >
+          Add Transaction
+        </button>
+      </nav>
+
+      <section class="banner" id="warningBanner" hidden></section>
+
+      <section class="tab-panel" id="overviewTab">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Portfolio Overview</p>
+            <h2>Portfolio Summary</h2>
+          </div>
+          <p class="section-subtitle" id="summarySubtitle">
+            Loading portfolio values, cost basis, gains, and the latest prices for open holdings.
+          </p>
+        </div>
+
+        <div class="summary-grid" id="summaryGrid">
+          <div class="summary-skeleton"></div>
+          <div class="summary-skeleton"></div>
+          <div class="summary-skeleton"></div>
+          <div class="summary-skeleton"></div>
+        </div>
+
+        <section class="panel allocation-panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-kicker">Allocation</p>
+              <h2>Market Value Mix</h2>
+            </div>
+            <p class="panel-note">
+              Shows the live market value breakdown of your open holdings.
+            </p>
+          </div>
+
+          <div class="allocation-chart" id="allocationChart" aria-live="polite">
+            <div class="allocation-chart__skeleton">
+              <div class="allocation-chart__skeleton-visual">
+                <div class="allocation-chart__skeleton-pie"></div>
+                <div class="skeleton-cell" style="height: 18px; width: 72%;"></div>
+              </div>
+              <div class="allocation-chart__skeleton-legend">
+                <div class="skeleton-cell" style="height: 58px;"></div>
+                <div class="skeleton-cell" style="height: 58px;"></div>
+                <div class="skeleton-cell" style="height: 58px;"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="overview-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="section-kicker">Holdings</p>
+                <h2>Open Positions</h2>
+              </div>
+              <p class="panel-note" id="priceCoverageHint">Waiting for backend data</p>
+            </div>
+
+            <div class="table-wrap">
+              <table class="table" aria-describedby="holdingsTableCaption">
+                <caption id="holdingsTableCaption" class="sr-only">
+                  Open holdings table
+                </caption>
+                <thead>
+                  <tr>
+                    <th>Holding</th>
+                    <th>Shares</th>
+                    <th>Avg Cost</th>
+                    <th>Latest Price</th>
+                    <th>Market Value</th>
+                  </tr>
+                </thead>
+                <tbody id="holdingsBody">
+                  <tr class="placeholder-row">
+                    <td colspan="5">Loading data...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="section-kicker">Transactions</p>
+                <h2>Transaction History</h2>
+              </div>
+              <p class="panel-note">Delete entries from here.</p>
+            </div>
+
+            <div class="transaction-list" id="transactionList">
+              <div class="empty-state">
+                <h3>No transactions yet</h3>
+                <p>Start by adding a trade in the form below.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="inputTab" hidden>
+        <div class="input-layout">
+          <section class="panel form-panel">
+            <div class="panel-header">
+              <div>
+                <p class="section-kicker">Add Transaction</p>
+                <h2>Enter a Trade</h2>
+              </div>
+              <p class="panel-note">
+                Enter the stock name or symbol, shares, total amount, and the buy or sell date.
+              </p>
+            </div>
+
+            <form id="transactionForm" class="transaction-form">
+              <label class="field">
+                <span>Stock Name / Symbol</span>
+                <input
+                  id="assetInput"
+                  name="asset"
+                  type="text"
+                  placeholder="AAPL, NVDA, Microsoft..."
+                  autocomplete="off"
+                  required
+                />
+              </label>
+
+              <div class="field-row">
+                <label class="field">
+                  <span>Type</span>
+                  <select id="typeInput" name="type" required>
+                    <option value="buy">Buy</option>
+                    <option value="sell">Sell</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Shares</span>
+                  <input
+                    id="sharesInput"
+                    name="shares"
+                    type="number"
+                    min="0.0001"
+                    step="0.0001"
+                    placeholder="10"
+                    required
+                  />
+                </label>
+              </div>
+
+              <label class="field">
+                <span>Total Trade Amount</span>
+                <input
+                  id="totalAmountInput"
+                  name="totalAmount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="1500"
+                  required
+                />
+              </label>
+
+              <label class="field">
+                <span>Trade Date</span>
+                <input id="dateInput" name="date" type="date" required />
+              </label>
+
+              <label class="field">
+                <span>Note</span>
+                <textarea
+                  id="noteInput"
+                  name="note"
+                  rows="3"
+                  placeholder="Example: add to a long-term position / lock in profits"
+                ></textarea>
+              </label>
+
+              <button class="submit-button" type="submit">Save Transaction</button>
+            </form>
+          </section>
+
+          <aside class="panel side-note">
+            <p class="section-kicker">Guide</p>
+            <h2>How to Enter Data</h2>
+            <ul class="guide-list">
+              <li>You can enter either the stock symbol or the company name.</li>
+              <li>Fill in the number of shares and the actual amount paid.</li>
+              <li>After saving, the dashboard will calculate the average cost and P/L automatically.</li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>
