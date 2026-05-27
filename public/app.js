@@ -9,6 +9,11 @@ const warningBanner = document.getElementById("warningBanner");
 const lastUpdated = document.getElementById("lastUpdated");
 const priceCoverageHint = document.getElementById("priceCoverageHint");
 const summarySubtitle = document.getElementById("summarySubtitle");
+const buySellSubtitle = document.getElementById("buySellSubtitle");
+const buySellChartNote = document.getElementById("buySellChartNote");
+const buySellStats = document.getElementById("buySellStats");
+const realizedChart = document.getElementById("realizedChart");
+const buySellSidecards = document.getElementById("buySellSidecards");
 const toastStack = document.getElementById("toastStack");
 const refreshButton = document.getElementById("refreshButton");
 const transactionForm = document.getElementById("transactionForm");
@@ -33,6 +38,7 @@ const tickerSuggestions = Array.from(
 const tabButtons = Array.from(document.querySelectorAll("[data-tab-target]"));
 const tabPanels = {
   overview: document.getElementById("overviewTab"),
+  buySell: document.getElementById("buySellTab"),
   input: document.getElementById("inputTab")
 };
 
@@ -132,6 +138,17 @@ function formatCurrency(value) {
   }
 
   return currencyFormatter.format(value);
+}
+
+function formatSignedCurrency(value) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "N/A";
+  }
+
+  const numericValue = Number(value);
+  const sign = numericValue > 0 ? "+" : numericValue < 0 ? "-" : "";
+
+  return `${sign}${currencyFormatter.format(Math.abs(numericValue))}`;
 }
 
 function formatCompactCurrency(value) {
@@ -485,6 +502,20 @@ function moneyClass(value) {
   return value > 0 ? "positive" : "negative";
 }
 
+function getRealizedPositions(realizedPositions) {
+  return (Array.isArray(realizedPositions) ? realizedPositions : [])
+    .filter((position) => Number(position.totalSold) > 0 || Number(position.realizedPnl) !== 0)
+    .sort((left, right) => {
+      const difference = Number(right.realizedPnl) - Number(left.realizedPnl);
+
+      if (difference !== 0) {
+        return difference;
+      }
+
+      return String(left.symbol || "").localeCompare(String(right.symbol || ""));
+    });
+}
+
 function badgeClass(type) {
   return type === "buy" ? "positive" : "negative";
 }
@@ -558,6 +589,34 @@ function renderLoadingState() {
     </div>
   `;
 
+  if (buySellStats) {
+    buySellStats.innerHTML = Array.from({ length: 4 })
+      .map(() => '<div class="buy-sell-skeleton"></div>')
+      .join("");
+  }
+
+  if (realizedChart) {
+    realizedChart.innerHTML = `
+      <div class="realized-chart__skeleton">
+        <div class="realized-chart__skeleton-row"></div>
+        <div class="realized-chart__skeleton-row"></div>
+        <div class="realized-chart__skeleton-row"></div>
+        <div class="realized-chart__skeleton-row"></div>
+      </div>
+    `;
+  }
+
+  if (buySellSidecards) {
+    buySellSidecards.innerHTML = `
+      <div class="buy-sell-skeleton buy-sell-skeleton--tall"></div>
+      <div class="buy-sell-skeleton buy-sell-skeleton--tall"></div>
+    `;
+  }
+
+  if (buySellChartNote) {
+    buySellChartNote.textContent = "Loading realized profit breakdown...";
+  }
+
   warningBanner.hidden = true;
   summarySubtitle.textContent = "Fetching portfolio values and latest prices...";
 }
@@ -599,6 +658,35 @@ function renderErrorState(message) {
           <h3>Unable to display the chart</h3>
           <p>${escapeHtml(message)}</p>
         </div>
+      `;
+    }
+
+    if (buySellStats) {
+      buySellStats.innerHTML = `
+        <div class="summary-card">
+          <p class="summary-label">Status</p>
+          <div class="summary-value negative">Error</div>
+          <div class="summary-meta">${escapeHtml(message)}</div>
+        </div>
+        <div class="summary-skeleton"></div>
+        <div class="summary-skeleton"></div>
+        <div class="summary-skeleton"></div>
+      `;
+    }
+
+    if (realizedChart) {
+      realizedChart.innerHTML = `
+        <div class="empty-state realized-empty">
+          <h3>Unable to display realized profit</h3>
+          <p>${escapeHtml(message)}</p>
+        </div>
+      `;
+    }
+
+    if (buySellSidecards) {
+      buySellSidecards.innerHTML = `
+        <div class="buy-sell-skeleton buy-sell-skeleton--tall"></div>
+        <div class="buy-sell-skeleton buy-sell-skeleton--tall"></div>
       `;
     }
   }
@@ -791,23 +879,23 @@ function renderHoldings(holdings) {
 
       return `
         <tr>
-          <td class="asset-cell">
+          <td class="asset-cell" data-label="Holding">
             <span class="asset-name">${escapeHtml(holding.companyName)}</span>
             <span class="asset-symbol">${escapeHtml(holding.symbol)}</span>
           </td>
-          <td>
+          <td data-label="Shares">
             <strong class="shares">${formatShares(holding.shares)}</strong>
             <span class="cell-subtext">${holding.transactionCount} trade(s)</span>
           </td>
-          <td>
+          <td data-label="Avg Cost">
             <strong class="money">${formatCompactCurrency(holding.avgCost)}</strong>
             <span class="cell-subtext">Average cost per share</span>
           </td>
-          <td>
+          <td data-label="Latest Price">
             <strong class="money ${priceTone}">${formatCurrency(holding.latestPrice)}</strong>
             <span class="cell-subtext ${profitLossTone}">${profitLossLabel}</span>
           </td>
-          <td>
+          <td data-label="Market Value">
             <strong class="money">${formatCurrency(holding.marketValue)}</strong>
             <span class="cell-subtext">Current market value</span>
           </td>
@@ -884,6 +972,152 @@ function renderTransactions(transactions) {
     .join("");
 }
 
+function renderBuySellStats(summary, realizedPositions) {
+  if (!buySellStats) {
+    return;
+  }
+
+  const activeRealizedCount = realizedPositions.length;
+  const positiveCount = realizedPositions.filter((position) => Number(position.realizedPnl) > 0).length;
+  const negativeCount = realizedPositions.filter((position) => Number(position.realizedPnl) < 0).length;
+  const flatCount = realizedPositions.filter((position) => Number(position.realizedPnl) === 0).length;
+
+  buySellStats.innerHTML = [
+    summaryCard(
+      "Realized P/L",
+      formatSignedCurrency(summary.totalRealizedPnl),
+      "Locked-in gain or loss across all symbols",
+      moneyClass(summary.totalRealizedPnl)
+    ),
+    summaryCard(
+      "Winning / Losing",
+      `${positiveCount} / ${negativeCount}`,
+      `${flatCount} symbol(s) are flat after sells`
+    ),
+    summaryCard(
+      "Sell Proceeds",
+      formatCurrency(summary.totalSellProceeds),
+      "Total cash pulled out from sold shares"
+    ),
+    summaryCard(
+      "Tracked Symbols",
+      `${activeRealizedCount}`,
+      "Symbols with sell activity or realized P/L"
+    )
+  ].join("");
+
+  if (buySellSubtitle) {
+    buySellSubtitle.textContent = `${activeRealizedCount} symbol(s) have sell activity, with ${positiveCount} winners and ${negativeCount} losers.`;
+  }
+}
+
+function renderBuySellSidecards(summary, realizedPositions) {
+  if (!buySellSidecards) {
+    return;
+  }
+
+  const best = summary.bestRealized || realizedPositions[0] || null;
+  const worst = summary.worstRealized || realizedPositions[realizedPositions.length - 1] || null;
+
+  const renderSidecard = (title, position, tone, caption) => {
+    if (!position) {
+      return `
+        <article class="buy-sell-sidecard empty-state">
+          <h3>${escapeHtml(title)}</h3>
+          <p>${escapeHtml(caption)}</p>
+        </article>
+      `;
+    }
+
+    return `
+      <article class="buy-sell-sidecard ${tone}">
+        <div class="buy-sell-sidecard__eyebrow">${escapeHtml(title)}</div>
+        <strong class="buy-sell-sidecard__symbol">${escapeHtml(position.symbol)}</strong>
+        <span class="buy-sell-sidecard__company">${escapeHtml(position.companyName || position.symbol)}</span>
+        <div class="buy-sell-sidecard__value ${moneyClass(position.realizedPnl)}">
+          ${formatSignedCurrency(position.realizedPnl)}
+        </div>
+        <div class="buy-sell-sidecard__meta">
+          <span>${formatCurrency(position.totalBought)} bought</span>
+          <span>${formatCurrency(position.totalSold)} sold</span>
+          <span>${formatShares(position.shares)} open shares</span>
+        </div>
+      </article>
+    `;
+  };
+
+  buySellSidecards.innerHTML = [
+    renderSidecard("Best realized trade", best, "positive", "No winning realized trade yet."),
+    renderSidecard("Worst realized trade", worst, "negative", "No losing realized trade yet.")
+  ].join("");
+}
+
+function renderRealizedChart(realizedPositions, dashboard) {
+  if (!realizedChart) {
+    return;
+  }
+
+  const positions = getRealizedPositions(realizedPositions);
+
+  if (!positions.length) {
+    realizedChart.innerHTML = `
+      <div class="empty-state realized-empty">
+        <h3>No realized trades yet</h3>
+        <p>The chart will appear once you sell shares and close part of a position.</p>
+      </div>
+    `;
+    if (buySellChartNote) {
+      buySellChartNote.textContent = "No sell activity yet.";
+    }
+    return;
+  }
+
+  const maxAbsolute = Math.max(...positions.map((position) => Math.abs(Number(position.realizedPnl) || 0)), 1);
+  const hiddenOpenCount = Array.isArray(dashboard?.holdings)
+    ? dashboard.holdings.filter(
+        (holding) => Number(holding.totalSold) === 0 && Number(holding.realizedPnl) === 0
+      ).length
+    : 0;
+
+  realizedChart.innerHTML = `
+    <div class="realized-chart__header">
+      <span>Symbol</span>
+      <span class="realized-chart__barlabel">Relative realized P/L</span>
+      <span>Result</span>
+    </div>
+    <div class="realized-chart__list">
+      ${positions
+        .map((position) => {
+          const value = Number(position.realizedPnl) || 0;
+          const width = Math.max(6, (Math.abs(value) / maxAbsolute) * 50);
+          const tone = value >= 0 ? "positive" : "negative";
+
+          return `
+            <article class="realized-row">
+              <div class="realized-row__ident">
+                <strong>${escapeHtml(position.symbol)}</strong>
+                <span>${escapeHtml(position.companyName || position.symbol)}</span>
+              </div>
+              <div class="realized-row__bar" style="--bar-size: ${width}%">
+                <span class="realized-row__axis"></span>
+                <span class="realized-row__fill ${tone}"></span>
+              </div>
+              <div class="realized-row__value ${tone}">
+                ${formatSignedCurrency(value)}
+                <small>${formatCurrency(position.totalSold)} sold</small>
+              </div>
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+
+  if (buySellChartNote) {
+    buySellChartNote.textContent = `${positions.length} symbol(s) with sell activity. ${hiddenOpenCount} open holding(s) have no sell history yet.`;
+  }
+}
+
 function renderWarnings(warnings) {
   if (!warnings || warnings.length === 0) {
     warningBanner.hidden = true;
@@ -922,6 +1156,9 @@ async function loadDashboard({ silent = false } = {}) {
     renderHoldings(dashboard.holdings || []);
     renderAllocationChart(dashboard.holdings || [], dashboard.summary || {});
     renderTransactions(dashboard.transactions || []);
+    renderBuySellStats(dashboard.buySellSummary || {}, dashboard.realizedPositions || []);
+    renderRealizedChart(dashboard.realizedPositions || [], dashboard);
+    renderBuySellSidecards(dashboard.buySellSummary || {}, dashboard.realizedPositions || []);
     updateAuxiliaryMeta(dashboard.summary || {}, dashboard.generatedAt);
 
     if (!silent) {

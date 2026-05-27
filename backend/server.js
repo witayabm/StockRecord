@@ -169,6 +169,16 @@ async function buildDashboard() {
     };
   });
 
+  const realizedPositions = portfolio.realizedPositions.map((position) => {
+    const realizedPct =
+      position.totalSold > 0 ? (position.realizedPnl / position.totalSold) * 100 : 0;
+
+    return {
+      ...position,
+      realizedPct
+    };
+  });
+
   holdings.sort((left, right) => {
     const leftValue = left.marketValue === null ? -1 : left.marketValue;
     const rightValue = right.marketValue === null ? -1 : right.marketValue;
@@ -222,6 +232,33 @@ async function buildDashboard() {
     lastTransactionDate
   };
 
+  const realizedPositionsWithActivity = realizedPositions.filter(
+    (position) => position.totalSold > 0 || position.realizedPnl !== 0
+  );
+  const realizedWinners = realizedPositionsWithActivity.filter(
+    (position) => position.realizedPnl > 0
+  ).length;
+  const realizedLosers = realizedPositionsWithActivity.filter(
+    (position) => position.realizedPnl < 0
+  ).length;
+  const realizedFlat = realizedPositionsWithActivity.filter(
+    (position) => position.realizedPnl === 0
+  ).length;
+  const bestRealized = realizedPositionsWithActivity[0] || null;
+  const worstRealized =
+    realizedPositionsWithActivity[realizedPositionsWithActivity.length - 1] || null;
+  const buySellSummary = {
+    totalRealizedPnl: portfolio.realizedPnl,
+    totalBoughtCapital: portfolio.grossBuyAmount,
+    totalSellProceeds: portfolio.grossSellProceeds,
+    realizedSymbols: realizedPositionsWithActivity.length,
+    winningSymbols: realizedWinners,
+    losingSymbols: realizedLosers,
+    flatSymbols: realizedFlat,
+    bestRealized,
+    worstRealized
+  };
+
   const sortedTransactions = portfolio.sortedTransactions
     .slice()
     .sort((left, right) => {
@@ -239,6 +276,8 @@ async function buildDashboard() {
     generatedAt: new Date().toISOString(),
     transactions: sortedTransactions,
     holdings,
+    realizedPositions,
+    buySellSummary,
     summary,
     warnings: [...new Set(warnings)]
   };

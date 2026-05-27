@@ -90,6 +90,8 @@ function calculatePortfolio(transactions) {
       realizedPnl: 0,
       totalBought: 0,
       totalSold: 0,
+      boughtShares: 0,
+      soldShares: 0,
       transactionCount: 0,
       lastTransactionDate: transaction.date || transaction.createdAt || ""
     };
@@ -103,6 +105,7 @@ function calculatePortfolio(transactions) {
       current.shares += shares;
       current.costBasis += totalAmount;
       current.totalBought += totalAmount;
+      current.boughtShares += shares;
       grossBuyAmount += totalAmount;
     } else if (transaction.type === "sell") {
       if (current.shares <= 0) {
@@ -116,6 +119,7 @@ function calculatePortfolio(transactions) {
       current.costBasis -= costRemoved;
       current.realizedPnl += totalAmount - costRemoved;
       current.totalSold += totalAmount;
+      current.soldShares += shares;
       grossSellProceeds += totalAmount;
     } else {
       throw new Error(`Unsupported transaction type: ${transaction.type}`);
@@ -135,12 +139,30 @@ function calculatePortfolio(transactions) {
   }
 
   const positions = [];
+  const realizedPositions = [];
   let currentCostBasis = 0;
   let currentShares = 0;
   let realizedPnl = 0;
 
   for (const state of states.values()) {
     realizedPnl += state.realizedPnl;
+
+    realizedPositions.push({
+      symbol: state.symbol,
+      companyName: state.companyName,
+      currency: state.currency,
+      shares: state.shares,
+      costBasis: state.costBasis,
+      avgCost: state.shares > 0 ? state.costBasis / state.shares : 0,
+      realizedPnl: state.realizedPnl,
+      totalBought: state.totalBought,
+      totalSold: state.totalSold,
+      boughtShares: state.boughtShares,
+      soldShares: state.soldShares,
+      transactionCount: state.transactionCount,
+      lastTransactionDate: state.lastTransactionDate,
+      isClosed: state.shares <= 0
+    });
 
     if (state.shares > 0) {
       positions.push({
@@ -153,6 +175,8 @@ function calculatePortfolio(transactions) {
         realizedPnl: state.realizedPnl,
         totalBought: state.totalBought,
         totalSold: state.totalSold,
+        boughtShares: state.boughtShares,
+        soldShares: state.soldShares,
         transactionCount: state.transactionCount,
         lastTransactionDate: state.lastTransactionDate
       });
@@ -172,8 +196,19 @@ function calculatePortfolio(transactions) {
     return left.symbol.localeCompare(right.symbol);
   });
 
+  realizedPositions.sort((left, right) => {
+    const realizedDifference = right.realizedPnl - left.realizedPnl;
+
+    if (realizedDifference !== 0) {
+      return realizedDifference;
+    }
+
+    return left.symbol.localeCompare(right.symbol);
+  });
+
   return {
     positions,
+    realizedPositions,
     realizedPnl: clampNumber(realizedPnl, 2),
     currentCostBasis: clampNumber(currentCostBasis, 2),
     currentShares: clampNumber(currentShares, 8),

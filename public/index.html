@@ -49,6 +49,14 @@
         <button
           class="tab-button"
           type="button"
+          data-tab-target="buySell"
+          aria-selected="false"
+        >
+          Buy-Sell
+        </button>
+        <button
+          class="tab-button"
+          type="button"
           data-tab-target="input"
           aria-selected="false"
         >
@@ -151,6 +159,97 @@
               </div>
             </div>
           </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="buySellTab" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Buy-Sell</p>
+            <h2>Realized Profit by Stock</h2>
+          </div>
+          <p class="section-subtitle" id="buySellSubtitle">
+            See which symbols have locked in gains or losses, ranked from the strongest realized result to the weakest.
+          </p>
+        </div>
+
+        <div class="buy-sell-hero">
+          <div class="buy-sell-hero__stats" id="buySellStats">
+            <div class="buy-sell-skeleton"></div>
+            <div class="buy-sell-skeleton"></div>
+            <div class="buy-sell-skeleton"></div>
+            <div class="buy-sell-skeleton"></div>
+          </div>
+          <div class="buy-sell-hero__insight">
+            <p class="section-kicker">Reading the chart</p>
+            <h3>Positive bars go to the right, losses go to the left.</h3>
+            <p>
+              The list below shows each symbol's realized result based on the trades already closed.
+              Open positions with no sale yet stay out of this view so the story stays focused.
+            </p>
+          </div>
+        </div>
+
+        <section class="panel buy-sell-panel">
+          <div class="panel-header">
+            <div>
+              <p class="section-kicker">Realized ladder</p>
+              <h2>Profit and Loss by Symbol</h2>
+            </div>
+            <p class="panel-note" id="buySellChartNote">
+              Loading realized profit breakdown...
+            </p>
+          </div>
+
+          <div class="realized-chart" id="realizedChart" aria-live="polite">
+            <div class="realized-chart__skeleton">
+              <div class="realized-chart__skeleton-row"></div>
+              <div class="realized-chart__skeleton-row"></div>
+              <div class="realized-chart__skeleton-row"></div>
+              <div class="realized-chart__skeleton-row"></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="buy-sell-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="section-kicker">Trade coverage</p>
+                <h2>What Counts Here</h2>
+              </div>
+              <p class="panel-note">Only symbols with a sell side activity are included.</p>
+            </div>
+
+            <div class="buy-sell-explainer">
+              <div class="buy-sell-explainer__item">
+                <span>Realized P/L</span>
+                <strong>Money already locked in after sells</strong>
+              </div>
+              <div class="buy-sell-explainer__item">
+                <span>Buy / Sell Amount</span>
+                <strong>Total cash spent and cash received per symbol</strong>
+              </div>
+              <div class="buy-sell-explainer__item">
+                <span>Open Shares</span>
+                <strong>Remaining shares still held after partial sells</strong>
+              </div>
+            </div>
+          </section>
+
+          <aside class="panel buy-sell-insight">
+            <div class="panel-header">
+              <div>
+                <p class="section-kicker">Top move</p>
+                <h2>Best and Worst Trades</h2>
+              </div>
+            </div>
+
+            <div class="buy-sell-sidecards" id="buySellSidecards">
+              <div class="buy-sell-skeleton buy-sell-skeleton--tall"></div>
+              <div class="buy-sell-skeleton buy-sell-skeleton--tall"></div>
+            </div>
+          </aside>
         </div>
       </section>
 
