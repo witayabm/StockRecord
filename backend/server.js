@@ -25,7 +25,14 @@ const {
 
 const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || process.env.PORT || 3000);
 const BACKEND_PORT = Number(process.env.BACKEND_PORT || 3001);
-const CORS_ORIGIN = process.env.CORS_ORIGIN || `http://localhost:${FRONTEND_PORT}`;
+const FRONTEND_BASE_URL =
+  process.env.FRONTEND_BASE_URL || `http://localhost:${FRONTEND_PORT}`;
+const CORS_ORIGINS = String(
+  process.env.CORS_ORIGIN || `http://localhost:${FRONTEND_PORT}`
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 function getLocalYmd(date = new Date()) {
   const year = date.getFullYear();
@@ -40,11 +47,22 @@ function getFmpPriceDate() {
   return getLocalYmd(date);
 }
 
-function getCorsHeaders() {
+function getCorsHeaders(requestOrigin) {
+  const allowedOrigin = CORS_ORIGINS.includes("*")
+    ? "*"
+    : requestOrigin && CORS_ORIGINS.includes(requestOrigin)
+      ? requestOrigin
+      : "";
+
+  if (!allowedOrigin) {
+    return {};
+  }
+
   return {
-    "Access-Control-Allow-Origin": CORS_ORIGIN,
+    "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Headers": "Content-Type",
+    Vary: "Origin"
   };
 }
 
@@ -52,7 +70,7 @@ function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
-    ...getCorsHeaders()
+    ...getCorsHeaders(res._requestOrigin)
   });
   res.end(JSON.stringify(payload));
 }
@@ -437,6 +455,7 @@ async function handleDashboard(res) {
 function handleBackendRequest(req, res) {
   const startedAt = Date.now();
   const parsedUrl = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+  res._requestOrigin = req.headers.origin || "";
 
   res.on("finish", () => {
     console.log(
@@ -445,7 +464,13 @@ function handleBackendRequest(req, res) {
   });
 
   if (req.method === "OPTIONS") {
-    res.writeHead(204, getCorsHeaders());
+    const corsHeaders = getCorsHeaders(req.headers.origin || "");
+    if (!corsHeaders["Access-Control-Allow-Origin"] && req.headers.origin) {
+      sendText(res, 403, "Origin not allowed");
+      return;
+    }
+
+    res.writeHead(204, corsHeaders);
     res.end();
     return;
   }
@@ -505,7 +530,7 @@ function handleBackendRequest(req, res) {
   if (!parsedUrl.pathname.startsWith("/api/")) {
     sendJson(res, 404, {
       error: "Backend server only handles API routes",
-      frontend: `http://localhost:${FRONTEND_PORT}`
+      frontend: FRONTEND_BASE_URL
     });
     return;
   }

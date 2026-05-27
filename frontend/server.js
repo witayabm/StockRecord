@@ -10,6 +10,8 @@ const FRONTEND_PORT = Number(process.env.FRONTEND_PORT || process.env.PORT || 30
 const BACKEND_PORT = Number(process.env.BACKEND_PORT || 3001);
 const API_BASE_URL =
   process.env.API_BASE_URL || `http://localhost:${BACKEND_PORT}`;
+const FRONTEND_BASE_URL =
+  process.env.FRONTEND_BASE_URL || `http://localhost:${FRONTEND_PORT}`;
 
 const PUBLIC_DIR = path.resolve(__dirname, "..", "public");
 
@@ -106,7 +108,7 @@ async function handleFrontendRequest(req, res) {
       200,
       `window.__APP_CONFIG__ = ${JSON.stringify({
         apiBaseUrl: API_BASE_URL,
-        frontendBaseUrl: `http://localhost:${FRONTEND_PORT}`
+        frontendBaseUrl: FRONTEND_BASE_URL
       })};`,
       req.method
     );

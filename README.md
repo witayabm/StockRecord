@@ -57,6 +57,7 @@ NODE_ENV=development
 FRONTEND_PORT=3000
 BACKEND_PORT=3001
 API_BASE_URL=http://localhost:3001
+FRONTEND_BASE_URL=http://localhost:3000
 CORS_ORIGIN=http://localhost:3000
 FMP_API_KEY=
 DATA_FILE=./data/transactions.json
@@ -102,6 +103,22 @@ Then open:
 
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:3001`
+
+## Deploy On Separate Domains
+
+If you host the frontend and backend on different domains, set these values in the environment:
+
+```text
+API_BASE_URL=https://api.example.com
+FRONTEND_BASE_URL=https://app.example.com
+CORS_ORIGIN=https://app.example.com
+```
+
+- `API_BASE_URL` is what the browser uses to call the backend from `public/app.js`
+- `CORS_ORIGIN` must match the exact frontend origin, or be a comma-separated list of allowed origins
+- `FRONTEND_BASE_URL` is used by `frontend/server.js` when it serves `config.js`
+
+If you use Docker Compose, update the `.env` file and make sure the container environment is not overriding those values back to `localhost`.
 
 ## API Endpoints
 
