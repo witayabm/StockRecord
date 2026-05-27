@@ -18,6 +18,18 @@ const sharesInput = document.getElementById("sharesInput");
 const totalAmountInput = document.getElementById("totalAmountInput");
 const dateInput = document.getElementById("dateInput");
 const noteInput = document.getElementById("noteInput");
+const tickerSuggestionList = document.getElementById("tickerSuggestions");
+const tickerSuggestionSource = `
+A, AAL, AAP, AAPL, ABBV, ABT, ACGL, ACN, ADBE, ADI, ADM, ADP, ADSK, AEE, AEP, AES, AFG, AFL, AIG, AIZ, AJG, AKAM, ALB, ALGN, ALL, ALLE, AMAT, AMCR, AMD, AME, AMGN, AMP, AMT, AMZN, ANET, ANSS, AON, AOS, APA, APD, APH, APLS, APTV, ARE, ATO, ATR, ATVI, AVB, AVGO, AVY, AWK, AXON, AXP, AZO, BA, BAC, BALL, BAX, BBWI, BBY, BDX, BEN, BF.B, BG, BIIB, BIO, BK, BKNG, BKR, BLK, BMO, BMY, BR, BRK.B, BRO, BSX, BWA, BX, BXP, BYON, C, CAG, CAH, CARR, CAT, CB, CBOE, CBRE, CCI, CCK, CCL, CDAY, CDNS, CDW, CE, CEG, CF, CFG, CHD, CHRW, CHTR, CI, CINF, CINT, CL, CLX, CMA, CMG, CMI, CMS, CNC, CNP, COF, COG, COO, COP, COR, COST, CPB, CPRT, CPRI, CPT, CPU, CRWD, CSCO, CSGP, CSX, CTAS, CTLT, CTRA, CTSH, CTVA, CZR, D, DAL, DD, DE, DECK, DFS, DG, DGX, DHI, DHR, DIS, DISH, DLR, DLTR, DOC, DOCU, DOV, DOW, DPZ, DRI, DTE, DUK, DVA, DVN, DXCM, EA, EBAY, ECL, ED, EFX, EG, EGOV, EIC, EIX, EL, ELV, EMN, EMR, ENPH, EOG, EPAM, EQIX, EQR, EQT, ERG, ES, ESS, ETN, ETR, ETSY, EVRG, EW, EXC, EXPD, EXPE, EXR, F, FANG, FAST, FI, FIBK, FICO, FIS, FISV, FITB, FLT, FMC, FND, FOX, FOXA, FSLR, FTNT, FTV, GD, GE, GEHC, GEN, GEV, GILD, GIS, GL, GLW, GM, GNRC, GOOG, GOOGL, GPC, GPN, GRMN, GS, GWRE, HAL, HAS, HBAN, HCA, HD, HES, HIG, HII, HLT, HOLX, HON, HPE, HPQ, HRL, HSIC, HST, HSY, HUBB, HUM, HWM, HYATT, IBM, ICE, IDXX, IEX, IFF, ILMN, INCY, INDV, INTC, INTU, INVH, IP, IPG, IQV, IR, IRM, ISRG, IT, ITW, IVZ, J, JBHT, JBL, JCI, JKHY, JNJ, JNPR, JPM, JRE, JWN, K, KDP, KEY, KEYS, KHC, KIM, KLAC, KMB, KMI, KMX, KNX, KO, KR, KSS, KTB, KVUE, L, LAD, LAMR, LBRDA, LBRDK, LDOS, LEN, LH, LHX, LIN, LKQ, LLY, LMT, LNC, LNT, LOW, LRCX, LULU, LUV, LVS, LW, LYB, LYV, M, MA, MAA, MAR, MAS, MCD, MCHP, MCK, MCO, MDLZ, MDT, MET, META, MGE, MGM, MHK, MKC, MKTX, MLM, MMC, MMM, MNST, MO, MOH, MOS, MPC, MPWR, MRK, MRO, MS, MSCI, MSFT, MSI, MTB, MTCH, MTD, MU, MUV, NCLH, NDAQ, NDSN, NEE, NEM, NFLX, NI, NKE, NIO, NKLA, NLY, NOC, NOW, NRG, NSC, NTAP, NTRS, NUE, NVDA, NVR, NWS, NWSA, NXPI, O, ODFL, ODFP, OGE, OGN, OI, ODF, OKE, OMC, ON, ONON, ODFL, ORLY, ORCL, OTIS, OXY, PANW, PARA, PAYX, PAYC, PBI, PCAR, PCG, PDCO, PDD, PEAK, PEG, PEP, PFE, PFG, PG, PGR, PH, PHM, PKG, PKI, PLD, PLTR, PM, PNC, PNR, PNW, PODD, POOL, PPG, PPL, PRU, PSA, PTC, PVH, PWR, PXD, PYPL, QCOM, QRVO, QS, RCL, RE, REG, REGN, RF, RHI, RHM, RIG, RJF, RL, RMD, ROK, ROL, ROP, ROST, RPRX, RPM, RRC, RSG, RTX, RVMD, RYA, SBAC, SBUX, SCG, SCHW, SHW, SIRI, SITM, SJM, SKM, SLB, SMCI, SMG, SNA, SNPS, SO, SPG, SPGI, SPLK, SPT, SRC, SRE, STE, STLD, STT, STX, STZ, SUN, SWK, SWKS, SWM, SYF, SYK, SYY, T, TAP, TDG, TDY, TECH, TEL, TER, TFT, TFX, TGT, TJX, TFC, TMO, TMUS, TPR, TRGP, TRMB, TROW, TRV, TSCO, TSLA, TSN, TT, TTWO, TXN, TXT, TYL, UA, UAA, UAL, UBER, UDR, UHS, ULTA, UNH, UNP, UPS, URI, USB, V, VAL, VEEV, VFC, VICI, VLO, VMC, VMT, VNO, VNT, VRSK, VRSN, VRTX, VTR, VTRS, VZ, WAB, WAL, WAT, WBA, WBD, WEC, WEG, WELL, WFC, WFR, WHR, WIX, WM, WMB, WMT, WRB, WRK, WST, WTW, WY, WYNN, XCEL, XOM, XRAY, XYL, YUM, ZBH, ZBRA, ZIL, ZION, ZTS
+`;
+const tickerSuggestions = Array.from(
+  new Set(
+    tickerSuggestionSource
+      .split(",")
+      .map((ticker) => ticker.trim().toUpperCase())
+      .filter(Boolean)
+  )
+);
 const tabButtons = Array.from(document.querySelectorAll("[data-tab-target]"));
 const tabPanels = {
   overview: document.getElementById("overviewTab"),
@@ -144,6 +156,16 @@ function formatPercent(value) {
   }
 
   return `${value >= 0 ? "+" : ""}${percentFormatter.format(value / 100)}`;
+}
+
+function populateTickerSuggestions() {
+  if (!tickerSuggestionList) {
+    return;
+  }
+
+  tickerSuggestionList.innerHTML = tickerSuggestions
+    .map((ticker) => `<option value="${escapeHtml(ticker)}"></option>`)
+    .join("");
 }
 
 function calculateProfitLossPercent(latestPrice, avgCost) {
@@ -1029,6 +1051,7 @@ function bindTabs() {
 
 function init() {
   setDefaultDate();
+  populateTickerSuggestions();
   bindTabs();
   refreshButton.addEventListener("click", () => loadDashboard());
   transactionForm.addEventListener("submit", handleFormSubmit);
