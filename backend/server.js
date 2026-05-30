@@ -260,18 +260,7 @@ async function buildDashboard() {
     worstRealized
   };
 
-  const sortedTransactions = portfolio.sortedTransactions
-    .slice()
-    .sort((left, right) => {
-      const leftDate = new Date(left.createdAt || left.date || 0).getTime();
-      const rightDate = new Date(right.createdAt || right.date || 0).getTime();
-
-      if (leftDate !== rightDate) {
-        return rightDate - leftDate;
-      }
-
-      return String(right.id || "").localeCompare(String(left.id || ""));
-    });
+  const sortedTransactions = sortTransactionsAscending(transactions).reverse();
 
   return {
     generatedAt: new Date().toISOString(),

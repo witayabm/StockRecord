@@ -918,7 +918,27 @@ function renderHoldings(holdings) {
 }
 
 function renderTransactions(transactions) {
-  if (!transactions.length) {
+  const sortedTransactions = [...(Array.isArray(transactions) ? transactions : [])].sort(
+    (left, right) => {
+      const leftDate = new Date(left?.date || left?.createdAt || 0).getTime();
+      const rightDate = new Date(right?.date || right?.createdAt || 0).getTime();
+
+      if (leftDate !== rightDate) {
+        return rightDate - leftDate;
+      }
+
+      const leftCreatedAt = new Date(left?.createdAt || 0).getTime();
+      const rightCreatedAt = new Date(right?.createdAt || 0).getTime();
+
+      if (leftCreatedAt !== rightCreatedAt) {
+        return rightCreatedAt - leftCreatedAt;
+      }
+
+      return String(right?.id || "").localeCompare(String(left?.id || ""));
+    }
+  );
+
+  if (!sortedTransactions.length) {
     transactionList.innerHTML = `
       <div class="empty-state">
         <h3>No transactions yet</h3>
@@ -928,7 +948,7 @@ function renderTransactions(transactions) {
     return;
   }
 
-  transactionList.innerHTML = transactions
+  transactionList.innerHTML = sortedTransactions
     .map((transaction) => {
       const badgeTone = badgeClass(transaction.type);
       return `
@@ -950,7 +970,6 @@ function renderTransactions(transactions) {
               </div>
               <div class="transaction-item__value">
                 <strong class="money">${formatCurrency(transaction.totalAmount)}</strong>
-                <span class="cell-subtext">${formatDateTime(transaction.createdAt)}</span>
               </div>
             </div>
             <div class="transaction-item__meta">
@@ -1244,9 +1263,10 @@ async function handleFormSubmit(event) {
     transactionForm.reset();
     setDefaultDate();
     typeInput.value = "buy";
-    setActiveTab("overview");
+    setActiveTab("input");
     showToast("Saved", "The transaction has been saved.", "success");
     await loadDashboard({ silent: true });
+    assetInput.focus();
   } catch (error) {
     showToast("Save failed", error.message, "error");
   } finally {
