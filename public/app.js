@@ -54,7 +54,7 @@ const compactCurrencyFormatter = new Intl.NumberFormat("en-US", {
 });
 const sharesFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 0,
-  maximumFractionDigits: 4
+  maximumFractionDigits: 3
 });
 const percentFormatter = new Intl.NumberFormat("en-US", {
   style: "percent",

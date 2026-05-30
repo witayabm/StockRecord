@@ -120,6 +120,12 @@ function parseJsonBody(req) {
   });
 }
 
+function hasAtMostDecimalPlaces(value, digits) {
+  const factor = 10 ** digits;
+  const scaled = value * factor;
+  return Math.abs(scaled - Math.round(scaled)) < 1e-9;
+}
+
 async function getLatestTransactions() {
   const transactions = await readTransactions();
   return sortTransactionsAscending(transactions).reverse();
@@ -382,6 +388,10 @@ function normalizeTransactionPayload(body) {
     throw new Error("Shares must be a positive number");
   }
 
+  if (!hasAtMostDecimalPlaces(shares, 3)) {
+    throw new Error("Shares can have at most 3 decimal places");
+  }
+
   if (totalAmount === null) {
     throw new Error("Total amount must be a positive number");
   }
@@ -412,7 +422,7 @@ async function handleCreateTransaction(res, body) {
     assetQuery: payload.asset,
     symbol: normalizedSymbol,
     companyName: snapshot.companyName || normalizedSymbol,
-    shares: payload.shares,
+    shares: clampNumber(payload.shares, 3),
     totalAmount: payload.totalAmount,
     unitPrice: clampNumber(payload.totalAmount / payload.shares, 2),
     date: payload.date,
