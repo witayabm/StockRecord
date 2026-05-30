@@ -125,7 +125,19 @@ async function fetchJson(path, options = {}) {
   }
 
   if (!response.ok) {
-    const message = data.error || `Request failed with ${response.status}`;
+    const messageParts = [];
+
+    if (data.error) {
+      messageParts.push(data.error);
+    }
+
+    if (data.details && data.details !== data.error) {
+      messageParts.push(data.details);
+    }
+
+    const message = messageParts.length
+      ? messageParts.join(": ")
+      : `Request failed with ${response.status}`;
     throw new Error(message);
   }
 

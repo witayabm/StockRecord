@@ -4,7 +4,7 @@ Stock Record is a small US stock buy/sell tracker with a separated frontend and 
 
 ## What It Does
 
-- Stores buy and sell transactions in a local JSON file
+- Stores buy and sell transactions in Supabase
 - Calculates holdings, average cost, realized P/L, unrealized P/L, and portfolio summary
 - Fetches market data from Financial Modeling Prep
 - Shows a responsive dashboard for desktop and mobile
@@ -34,7 +34,7 @@ StockRecord/
     portfolio.js
     storage.js
   data/
-    transactions.json
+    transactions.csv
   server.js
   package.json
   .env.example
@@ -60,7 +60,9 @@ API_BASE_URL=http://localhost:3001
 FRONTEND_BASE_URL=http://localhost:3000
 CORS_ORIGIN=http://localhost:3000
 FMP_API_KEY=
-DATA_FILE=./data/transactions.json
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_TABLE=transactions
 ```
 
 ## Install
@@ -158,4 +160,26 @@ If your platform only gives you one public port, you can leave `API_BASE_URL` un
 
 - The frontend talks to the backend through `API_BASE_URL` from `config.js`
 - If you change the ports, update `.env` accordingly
-- `data/transactions.json` is created automatically if it does not exist
+- The backend talks to Supabase through the PostgREST API at `/rest/v1/transactions`
+- Keep `SUPABASE_SERVICE_ROLE_KEY` on the server side only
+- `data/transactions.json` is no longer the source of truth
+
+## Supabase Table
+
+Use a table named `transactions` with columns like these:
+
+- `id` text or uuid, primary key
+- `type` text
+- `assetQuery` text
+- `symbol` text
+- `companyName` text
+- `shares` numeric
+- `totalAmount` numeric
+- `unitPrice` numeric
+- `date` date
+- `note` text nullable
+- `currency` text
+- `priceSource` text nullable
+- `createdAt` timestamptz
+
+If you already have a different schema, the backend can be adapted to map to it, but this shape matches the current app most closely.

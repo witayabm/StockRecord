@@ -14,6 +14,4 @@ services:
       API_BASE_URL: ${API_BASE_URL:-http://localhost:3001}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:3000}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
-    volumes:
-      - ./data:/app/data
     restart: unless-stopped

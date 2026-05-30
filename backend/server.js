@@ -7,8 +7,9 @@ loadEnv();
 
 const {
   ensureDataStore,
+  deleteTransactionById,
+  insertTransaction,
   readTransactions,
-  writeTransactions
 } = require("../src/storage");
 const {
   calculatePortfolio,
@@ -433,12 +434,11 @@ async function handleCreateTransaction(res, body) {
 
   ensureCanApplyTransaction(transactions, transaction);
 
-  const updatedTransactions = [...transactions, transaction];
-  await writeTransactions(updatedTransactions);
+  const savedTransaction = await insertTransaction(transaction);
 
   sendJson(res, 201, {
     message: "Transaction saved",
-    transaction
+    transaction: savedTransaction
   });
 }
 
@@ -471,7 +471,7 @@ async function handleDeleteTransaction(res, transactionId) {
     return;
   }
 
-  await writeTransactions(updatedTransactions);
+  await deleteTransactionById(transactionId);
 
   sendJson(res, 200, {
     message: "Transaction deleted",
@@ -542,7 +542,12 @@ function handleBackendRequest(req, res) {
   }
 
   if (req.method === "GET" && parsedUrl.pathname === "/api/transactions") {
-    handleGetTransactions(res);
+    handleGetTransactions(res).catch((error) => {
+      sendJson(res, 500, {
+        error: "Could not load transactions",
+        details: error.message
+      });
+    });
     return;
   }
 
@@ -557,7 +562,12 @@ function handleBackendRequest(req, res) {
 
   if (req.method === "DELETE" && parsedUrl.pathname.startsWith("/api/transactions/")) {
     const transactionId = parsedUrl.pathname.split("/").pop();
-    handleDeleteTransaction(res, transactionId);
+    handleDeleteTransaction(res, transactionId).catch((error) => {
+      sendJson(res, 500, {
+        error: "Could not delete transaction",
+        details: error.message
+      });
+    });
     return;
   }
 
