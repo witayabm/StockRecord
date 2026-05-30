@@ -1073,7 +1073,12 @@ nav {
 .transaction-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px 14px;
+  grid-template-areas:
+    "header value"
+    "company value"
+    "meta actions"
+    "note note";
+  gap: 8px 14px;
   align-items: start;
   width: min(100%, 760px);
   padding: 12px 13px;
@@ -1093,15 +1098,13 @@ nav {
 }
 
 .transaction-item__main {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
+  display: contents;
 }
 
 .transaction-item__header {
+  grid-area: header;
   display: flex;
   align-items: start;
-  justify-content: space-between;
   gap: 12px;
   min-width: 0;
 }
@@ -1125,6 +1128,7 @@ nav {
 }
 
 .transaction-item__company {
+  grid-area: company;
   color: var(--muted);
   font-size: 0.84rem;
   line-height: 1.35;
@@ -1132,11 +1136,12 @@ nav {
 }
 
 .transaction-item__value {
+  grid-area: value;
   display: grid;
   justify-items: end;
   gap: 2px;
   text-align: right;
-  min-width: 122px;
+  min-width: 0;
 }
 
 .transaction-item__value .money {
@@ -1145,11 +1150,13 @@ nav {
 }
 
 .transaction-item__meta {
+  grid-area: meta;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   color: var(--muted);
   font-size: 0.81rem;
+  min-width: 0;
 }
 
 .transaction-item__meta span {
@@ -1164,6 +1171,7 @@ nav {
 }
 
 .transaction-item__note {
+  grid-area: note;
   margin: 0;
   color: var(--muted);
   font-size: 0.84rem;
@@ -1172,10 +1180,12 @@ nav {
 }
 
 .transaction-actions {
+  grid-area: actions;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   align-self: start;
+  padding-top: 2px;
 }
 
 .ghost-button {
@@ -1443,24 +1453,20 @@ nav {
   }
 
   .transaction-item {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "header actions"
+      "company company"
+      "value value"
+      "meta meta"
+      "note note";
+    gap: 8px 12px;
   }
 
   .transaction-actions {
     justify-content: flex-end;
-    align-self: stretch;
-  }
-
-  .transaction-item__header {
-    flex-direction: column;
-    align-items: start;
-  }
-
-  .transaction-item__value {
-    justify-items: start;
-    text-align: left;
-    min-width: 0;
+    align-self: start;
+    padding-top: 0;
   }
 
   .allocation-chart__pie {

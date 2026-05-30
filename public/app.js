@@ -964,13 +964,13 @@ function renderTransactions(transactions) {
                     transaction.type.toUpperCase()
                   )}</span>
                 </div>
-                <div class="transaction-item__company">
-                  ${escapeHtml(transaction.companyName || transaction.assetQuery || "-")}
-                </div>
               </div>
-              <div class="transaction-item__value">
-                <strong class="money">${formatCurrency(transaction.totalAmount)}</strong>
-              </div>
+            </div>
+            <div class="transaction-item__company">
+              ${escapeHtml(transaction.companyName || transaction.assetQuery || "-")}
+            </div>
+            <div class="transaction-item__value">
+              <strong class="money">${formatCurrency(transaction.totalAmount)}</strong>
             </div>
             <div class="transaction-item__meta">
               <span>${formatDate(transaction.date)}</span>
