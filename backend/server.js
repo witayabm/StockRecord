@@ -13,6 +13,7 @@ const {
 } = require("../src/storage");
 const {
   calculatePortfolio,
+  clampNumber,
   ensureCanApplyTransaction,
   sortTransactionsAscending,
   toPositiveNumber
@@ -413,7 +414,7 @@ async function handleCreateTransaction(res, body) {
     companyName: snapshot.companyName || normalizedSymbol,
     shares: payload.shares,
     totalAmount: payload.totalAmount,
-    unitPrice: payload.totalAmount / payload.shares,
+    unitPrice: clampNumber(payload.totalAmount / payload.shares, 2),
     date: payload.date,
     note: payload.note,
     currency: snapshot.currency || "USD",
